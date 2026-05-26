@@ -30,8 +30,8 @@ export default async function HomePage() {
               <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight text-balance">
                 Join Our Team
               </h1>
-              <p className="text-lg text-muted-foreground max-w-2xl text-pretty">
-                Explore our latest opportunities and become part of a team that drives innovation forward.
+              <p className="text-lg text-muted-foreground max-w-2xl text-pretty" style={{ fontFamily: 'inherit' }}>
+                Explore our latest opportunities in China and become part of a team that drives innovation forward.
               </p>
             </div>
           </div>
