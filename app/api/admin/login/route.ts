@@ -13,6 +13,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Only the 'admin' account is permitted
+    if (username !== 'admin') {
+      return NextResponse.json(
+        { error: 'Invalid credentials' },
+        { status: 401 }
+      )
+    }
+
     const supabase = createAdminClient()
 
     // Verify password using pgcrypto's crypt function
