@@ -4,22 +4,40 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { Lock } from "lucide-react"
-
-const ADMIN_PASSWORD = "audi2024"
+import { Lock, Loader2 } from "lucide-react"
 
 export default function AdminPage() {
+  const [username, setUsername] = useState("admin")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (password === ADMIN_PASSWORD) {
-      setError("")
-      router.push("/admin/dashboard")
-    } else {
-      setError("Incorrect password. Please try again.")
+    setLoading(true)
+    setError("")
+
+    try {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        router.push("/admin/dashboard")
+      } else {
+        setError(data.error || "Invalid credentials. Please try again.")
+      }
+    } catch {
+      setError("An error occurred. Please try again.")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -38,12 +56,28 @@ export default function AdminPage() {
               <div className="text-center">
                 <h1 className="text-xl font-semibold text-foreground">Admin Access</h1>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Enter the admin password to continue.
+                  Enter your credentials to continue.
                 </p>
               </div>
 
               <form onSubmit={handleLogin} className="w-full space-y-4">
                 <div>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Username"
+                    className="w-full h-10 px-3 bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">
+                    Password
+                  </label>
                   <input
                     type="password"
                     value={password}
@@ -58,13 +92,19 @@ export default function AdminPage() {
 
                 <button
                   type="submit"
-                  className="w-full h-10 bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+                  disabled={loading}
+                  className="w-full h-10 bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  Sign In
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    "Sign In"
+                  )}
                 </button>
               </form>
-
-
             </div>
           </div>
         </div>

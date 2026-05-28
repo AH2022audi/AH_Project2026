@@ -1,15 +1,17 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Job } from "@/lib/types"
 import { createClient } from "@/lib/supabase/client"
-import { Plus, Pencil, Trash2, X, Save, Loader2 } from "lucide-react"
+import { Plus, Pencil, Trash2, X, Save, Loader2, LogOut } from "lucide-react"
 
 export default function AdminDashboard() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
+  const [authChecking, setAuthChecking] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingJob, setEditingJob] = useState<Job | null>(null)
   const [saving, setSaving] = useState(false)
@@ -19,8 +21,35 @@ export default function AdminDashboard() {
     location: "",
     description: "",
   })
+  const router = useRouter()
 
   const supabase = createClient()
+
+  // Verify admin session on mount
+  useEffect(() => {
+    const verifySession = async () => {
+      try {
+        const response = await fetch("/api/admin/verify")
+        if (!response.ok) {
+          router.push("/admin")
+          return
+        }
+        setAuthChecking(false)
+      } catch {
+        router.push("/admin")
+      }
+    }
+    verifySession()
+  }, [router])
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/logout", { method: "POST" })
+      router.push("/admin")
+    } catch {
+      console.error("Logout failed")
+    }
+  }
 
   const fetchJobs = useCallback(async () => {
     setLoading(true)
@@ -93,6 +122,19 @@ export default function AdminDashboard() {
     }
   }
 
+  // Show loading state while checking auth
+  if (authChecking) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -106,13 +148,22 @@ export default function AdminDashboard() {
                 Add, edit, or remove job listings.
               </p>
             </div>
-            <button
-              onClick={() => openModal()}
-              className="flex items-center gap-2 h-10 px-4 bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              Add Position
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 h-10 px-4 border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </button>
+              <button
+                onClick={() => openModal()}
+                className="flex items-center gap-2 h-10 px-4 bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                Add Position
+              </button>
+            </div>
           </div>
 
           {loading ? (
